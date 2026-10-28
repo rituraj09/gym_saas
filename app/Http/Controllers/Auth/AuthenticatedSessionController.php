@@ -11,37 +11,38 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Display the login view.
-     */
     public function create(): View
     {
         return view('auth.login');
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended($this->getDashboardUrl($request->user()));
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    protected function getDashboardUrl($user): string
+    {
+        return match ($user->getPrimaryRole()) {
+            'platform_admin' => route('admin.dashboard'),
+            'gym_owner'      => route('owner.dashboard'),
+            'trainer'        => route('trainer.dashboard'),
+            'member'         => route('member.dashboard'),
+            default          => '/dashboard',
+        };
     }
 }

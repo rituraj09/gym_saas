@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -12,19 +11,11 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
@@ -33,11 +24,6 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * Attempt to authenticate the request's credentials.
-     *
-     * @throws ValidationException
-     */
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
@@ -50,15 +36,50 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Check account status after successful credential match
+        $user = Auth::user();
+
+        if (! $user->isActive()) {
+            Auth::logout();
+
+            $this->session()->invalidate();
+            $this->session()->regenerateToken();
+
+            RateLimiter::hit($this->throttleKey());
+
+            $statusMessage = match ($user->accountStatus?->code) {
+                'suspended' => 'Your account has been suspended. Please contact support.',
+                'pending'   => 'Your account is pending approval. Please wait for activation.',
+                'inactive'  => 'Your account is inactive. Please contact support.',
+                default     => 'Your account is not active. Please contact support.',
+            };
+
+            throw ValidationException::withMessages([
+                'email' => $statusMessage,
+            ]);
+        }
+
+        // Check that user has at least one role assigned
+        if (! $user->getPrimaryRole()) {
+            Auth::logout();
+
+            $this->session()->invalidate();
+            $this->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => 'No role has been assigned to your account. Please contact support.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
-    /**
-     * Ensure the login request is not rate limited.
-     *
-     * @throws ValidationException
-     */
-    public function ensureIsNotRateLimited(): void
+    public function throttleKey(): string
+    {
+        return Str::transliterate(Str::lower($this->string('email')) . '|' . $this->ip());
+    }
+
+    protected function ensureIsNotRateLimited(): void
     {
         if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
@@ -74,13 +95,5 @@ class LoginRequest extends FormRequest
                 'minutes' => ceil($seconds / 60),
             ]),
         ]);
-    }
-
-    /**
-     * Get the rate limiting throttle key for the request.
-     */
-    public function throttleKey(): string
-    {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
     }
 }

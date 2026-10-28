@@ -38,7 +38,7 @@
                             Log in
                         </a>
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}"
+                            <a href="{{ route('gym.register') }}"
                                 class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-indigo-700 transition">
                                 Get Started
                             </a>
@@ -69,7 +69,7 @@
                                 Go to Dashboard
                             </a>
                         @else
-                            <a href="{{ route('register') }}"
+                            <a href="{{ route('gym.register') }}"
                                 class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">
                                 Start Free Trial
                             </a>
@@ -184,9 +184,9 @@
                 <h2 class="text-3xl font-bold text-white">Ready to Transform Your Gym?</h2>
                 <p class="mt-4 text-lg text-indigo-100">Start your free trial today. No credit card required.</p>
                 <div class="mt-8">
-                    <a href="{{ route('register') }}"
-                        class="inline-flex items-center px-8 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition shadow-lg">
-                        Get Started Free
+                    <a href="{{ route('gym.register') }}"
+                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-indigo-700 transition">
+                        Get Started
                     </a>
                 </div>
             </div>

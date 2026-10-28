@@ -5,6 +5,8 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Models\AccountStatus;
+use App\Models\UserRole;
 
 class AuthenticationTest extends TestCase
 {
@@ -19,15 +21,27 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
-        $user = User::factory()->create();
+        $this->seed();
+
+        $user = \App\Models\User::factory()->create([
+            'account_status_id' => AccountStatus::where('code', 'active')
+                ->firstOrFail()->id,
+        ]);
+
+        $role = UserRole::where('code', 'gym_owner')->firstOrFail();
+
+        $user->roles()->attach($role->id);
 
         $response = $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertSessionHasNoErrors();
+
+        $this->assertAuthenticatedAs($user);
+
+        $response->assertRedirect(route('owner.dashboard'));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
