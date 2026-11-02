@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\LogsActivity;
 
 class Member extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'user_id', 'gym_id', 'member_code', 'date_of_birth',
@@ -64,13 +65,62 @@ class Member extends Model
         return $this->hasMany(Membership::class);
     }
 
-    public function activeMembership(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(Membership::class)->active()->latestOfMany('start_date');
-    }
+   public function activeMembership(): \Illuminate\Database\Eloquent\Relations\HasOne
+{
+    return $this->hasOne(Membership::class)
+        ->whereHas('status', function ($query) {
+            $query->where('code', 'active');
+        })
+        ->whereDate('end_date', '>=', now()->toDateString())
+        ->latestOfMany('end_date');
+}
+
+
 
     public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(GymMemberPayment::class);
+    }
+
+
+
+    public function latestMembership()
+    {
+        return $this->hasOne(Membership::class)->latest('end_date');
+    }
+
+    /**
+     * Currently active exercise plan.
+     */
+    public function activeExercisePlan()
+    {
+        return $this->hasOne(MemberExercisePlan::class)
+            ->where('is_active', true)
+            ->latest();
+    }
+
+    /**
+     * Currently active diet plan.
+     */
+    public function activeDietPlan()
+    {
+        return $this->hasOne(MemberDietPlan::class)
+            ->where('is_active', true)
+            ->latest();
+    }
+
+    /**
+     * Trainers assigned to this member.
+     */
+    public function assignedTrainers()
+    {
+        return $this->belongsToMany(
+         Trainer::class,
+            'trainer_member_assignments'
+        )->wherePivot('assignment_status_id', function ($q) {
+            $q->select('id')
+            ->from('assignment_statuses')
+            ->where('code', 'active');
+        });
     }
 }

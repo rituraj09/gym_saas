@@ -56,7 +56,11 @@ class TrainerController extends Controller
 
     public function store(StoreTrainerRequest $request): RedirectResponse
     {
-        $gym = $request->user()->gymOwner->gym;
+        $gym = auth()->user()->gymOwner->gym;
+
+       if ($subscription && !$subscription->canAddTrainer()) {
+            return back()->with('error', 'You have reached the maximum number of trainers (' . $subscription->saasPlan->max_trainers_label . ') allowed by your ' . $subscription->saasPlan->name . ' plan. Please upgrade to add more.');
+        }
 
         $this->trainerService->createTrainer(
             $gym,

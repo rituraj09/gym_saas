@@ -47,4 +47,9 @@ class MemberDietLog extends Model
             default => 'bg-gray-100 text-gray-800',
         };
     }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class, 'member_id');
+    }
 }

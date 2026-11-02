@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\LogsActivity;
 
 class Trainer extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'user_id', 'gym_id', 'trainer_code', 'specialization',
@@ -64,5 +65,34 @@ class Trainer extends Model
             })
             ->withPivot(['start_date', 'end_date', 'id'])
             ->withTimestamps();
+    }
+
+    /**
+     * All members in this trainer's gym.
+     */
+    public function gymMembers()
+    {
+        return  Member::where('gym_id', $this->gym_id);
+    }
+
+    /**
+     * IDs of members specifically assigned to this trainer.
+     */
+    public function getAssignedMemberIds(): array
+    {
+        return  TrainerMemberAssignment::where('trainer_id', $this->id)
+            ->whereHas('status', fn($q) => $q->where('code', 'active'))
+            ->pluck('member_id')
+            ->toArray();
+    }
+
+    /**
+     * Check if a member belongs to this trainer's gym.
+     */
+    public function canManageMember(int $memberId): bool
+    {
+        return  Member::where('id', $memberId)
+            ->where('gym_id', $this->gym_id)
+            ->exists();
     }
 }

@@ -34,7 +34,12 @@
                         @foreach ($subscriptions as $sub)
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="font-medium text-gray-900">{{ $sub->gym->name }}</span>
+                                    <span class="font-medium text-gray-900">
+                                        <a href="{{ route('admin.gym-subscriptions.show', $sub->id) }}"
+                                            class="text-blue-600 hover:text-blue-900">
+                                            {{ $sub->gym->name }}
+                                        </a>
+                                    </span>
                                     <span class="text-xs text-gray-400 block">{{ $sub->gym->code }}</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $sub->saasPlan->name }}
@@ -50,6 +55,11 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ $sub->end_date ? $sub->end_date->format('M d, Y') : 'Ongoing' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
+                                    <a href="{{ route('admin.gym-module-access.index', $sub->gym_id) }}"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-purple-600 hover:bg-purple-50 rounded-lg text-sm font-medium min-h-[44px]">
+                                        <x-icon name="cog" class="w-4 h-4" />
+                                        <span class="hidden lg:inline">Modules</span>
+                                    </a>
                                     @if ($sub->isActive())
                                         <form method="POST"
                                             action="{{ route('admin.gym-subscriptions.cancel', $sub) }}"

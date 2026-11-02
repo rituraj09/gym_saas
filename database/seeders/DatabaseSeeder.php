@@ -27,9 +27,13 @@ class DatabaseSeeder extends Seeder
             WorkoutLogStatusSeeder::class,
             // Phase 14
             MealTypeSeeder::class,
+            //Admin Seeder
+            PlatformAdminSeeder::class,
             // Phase 15
             SaasSubscriptionStatusSeeder::class,
             SaasPlanSeeder::class,
+
+            PlatformSettingSeeder::class,
         ]);
     }
 }

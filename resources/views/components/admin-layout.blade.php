@@ -1,167 +1,302 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Admin' }} — {{ config('app.name') }}</title>
 
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
+    <title>{{ $headerTitle ?? 'Trainer Panel' }} | {{ config('app.name') }}</title>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
 
-<body class="font-sans antialiased bg-gray-50">
+<body class="bg-slate-50 min-h-screen antialiased">
 
     @php
-        $user = auth()->user();
-        $currentRoute = request()->route()->getName();
+        $currentRoute = request()->route()?->getName() ?? '';
+        $trainer = Auth::user()->trainer;
+        $gymName = $trainer?->gym?->name ?? 'Gym';
+        $userName = Auth::user()->name;
+        $unread = Auth::user()->unreadNotificationCount();
+
+        $isActive = fn($prefix) => str_starts_with($currentRoute, $prefix);
     @endphp
 
-    <!-- Mobile Sidebar Overlay -->
-    <div id="sidebar-overlay" class="fixed inset-0 z-40 bg-black/50 hidden lg:hidden" onclick="closeSidebar()"></div>
+    {{-- Mobile sidebar overlay --}}
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-40 hidden lg:hidden"
+        onclick="closeSidebar()">
+    </div>
 
-    <!-- Sidebar -->
+    {{-- Sidebar --}}
     <aside id="sidebar"
-        class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 border-r border-slate-800 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out flex flex-col">
+        class="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white border-r border-slate-200
+                  -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
 
-        <!-- Sidebar Header -->
-        <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800 flex-shrink-0">
-            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
-                    <x-icon name="shield-check" class="w-5 h-5 text-blue-500" />
-                </div>
-                <div class="min-w-0">
-                    <p class="text-sm font-semibold text-blue-400 truncate">{{ config('app.name') }}</p>
-                    <p class="text-xs text-slate-400 truncate">Platform Admin</p>
-                </div>
-            </a>
-            <button onclick="closeSidebar()" class="lg:hidden p-1.5 rounded-lg hover:bg-slate-800">
-                <x-icon name="x-mark" class="w-5 h-5 text-slate-400" />
+        {{-- Brand --}}
+        <div class="h-20 px-6 flex items-center gap-3 border-b border-slate-100 shrink-0">
+
+            <div
+                class="w-11 h-11 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+                <x-icon name="academic-cap" class="w-6 h-6 text-white" />
+            </div>
+
+            <div class="min-w-0 flex-1">
+                <h1 class="font-bold text-slate-900 text-base">Trainer Panel</h1>
+                <p class="text-xs text-slate-500 truncate mt-0.5">{{ $gymName }}</p>
+            </div>
+
+            <button onclick="closeSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-500">
+                <x-icon name="x-mark" class="w-5 h-5" />
             </button>
         </div>
 
-        <!-- Navigation -->
-        <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-            <p class="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Main</p>
+        {{-- Navigation --}}
+        <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-7">
 
-            <x-admin-sidebar-link href="{{ route('admin.dashboard') }}" icon="home" label="Dashboard"
-                :active="str_contains($currentRoute, 'admin.dashboard')" />
+            {{-- Main --}}
+            <div>
+                <p class="px-3 mb-2 text-[10px] font-bold tracking-[0.16em] uppercase text-slate-400">
+                    Main Menu
+                </p>
 
-            <p class="px-3 mt-5 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Subscriptions</p>
+                <div class="space-y-1">
+                    <x-sidebar-link href="{{ route('trainer.dashboard') }}" icon="squares-2x2" label="Dashboard"
+                        :active="$currentRoute === 'trainer.dashboard'" />
+                </div>
+            </div>
 
-            <x-admin-sidebar-link href="{{ route('admin.saas-plans.index') }}" icon="sparkles" label="SaaS Plans"
-                :active="request()->routeIs('admin.saas-plans.*')" />
-            <x-admin-sidebar-link href="{{ route('admin.gym-subscriptions.index') }}" icon="credit-card"
-                label="Gym Subscriptions" :active="request()->routeIs('admin.gym-subscriptions.*')" />
+            {{-- People --}}
+            <div>
+                <p class="px-3 mb-2 text-[10px] font-bold tracking-[0.16em] uppercase text-slate-400">
+                    Members
+                </p>
 
-            <p class="px-3 mt-5 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Platform</p>
+                <div class="space-y-1">
+                    <x-sidebar-link href="{{ route('trainer.members.index') }}" icon="user-group" label="All Members"
+                        :active="$isActive('trainer.members')" />
+                </div>
+            </div>
 
-            <x-admin-sidebar-link href="#" icon="building-office" label="All Gyms" :active="false" />
-            <x-admin-sidebar-link href="#" icon="users" label="All Users" :active="false" />
+            {{-- Plans --}}
+            <div>
+                <p class="px-3 mb-2 text-[10px] font-bold tracking-[0.16em] uppercase text-slate-400">
+                    Training & Nutrition
+                </p>
 
-            <p class="px-3 mt-5 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">More</p>
+                <div class="space-y-1">
+                    <x-sidebar-link href="{{ route('trainer.exercise-plans.index') }}" icon="clipboard-document-list"
+                        label="Exercise Plans" :active="$isActive('trainer.exercise-plans')" />
 
-            <x-admin-sidebar-link href="#" icon="chart-bar" label="Reports" :active="false" />
-            <x-admin-sidebar-link href="#" icon="cog" label="Settings" :active="false" />
+                    <x-sidebar-link href="{{ route('trainer.diet-plans.index') }}" icon="clipboard-document-check"
+                        label="Diet Plans" :active="$isActive('trainer.diet-plans')" />
+                </div>
+            </div>
+
+            {{-- Account --}}
+            <div>
+                <p class="px-3 mb-2 text-[10px] font-bold tracking-[0.16em] uppercase text-slate-400">
+                    Account
+                </p>
+
+                <div class="space-y-1">
+                    <x-sidebar-link href="{{ route('trainer.notifications.index') }}" icon="bell"
+                        label="Notifications" :active="$isActive('trainer.notifications')" />
+
+                    <x-sidebar-link href="{{ route('trainer.profile.edit') }}" icon="user-circle" label="My Profile"
+                        :active="$isActive('trainer.profile')" />
+                </div>
+            </div>
+
         </nav>
 
-        <!-- Sidebar Footer -->
-        <div class="border-t border-slate-800 p-3 flex-shrink-0">
+        {{-- Sidebar bottom --}}
+        <div class="p-4 border-t border-slate-100 shrink-0">
+
+            <div class="flex items-center gap-3 p-3 mb-3 rounded-xl bg-slate-50">
+                <div
+                    class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold shrink-0">
+                    {{ strtoupper(substr($userName, 0, 1)) }}
+                </div>
+
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-slate-800 truncate">
+                        {{ $userName }}
+                    </p>
+                    <p class="text-xs text-slate-500">Trainer</p>
+                </div>
+            </div>
+
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
+
                 <button type="submit"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition w-full min-h-[44px]">
-                    <x-icon name="logout" class="w-5 h-5" />
-                    <span>Log Out</span>
+                    class="flex items-center gap-3 w-full px-3 py-3 rounded-xl
+                               text-sm font-medium text-slate-600
+                               hover:bg-red-50 hover:text-red-600 transition-colors">
+
+                    <x-icon name="arrow-right-start-on-rectangle" class="w-5 h-5" />
+                    Sign Out
                 </button>
             </form>
+
         </div>
     </aside>
 
-    <!-- Main Content Area -->
+    {{-- Main application --}}
     <div class="lg:ml-72 min-h-screen flex flex-col">
 
-        <!-- Top Bar -->
+        {{-- Header --}}
         <header
-            class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6">
-            <div class="flex items-center gap-3">
-                <button onclick="openSidebar()" class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100">
-                    <x-icon name="bars" class="w-6 h-6 text-gray-700" />
-                </button>
-                <h1 class="text-lg font-semibold text-gray-900">{{ $headerTitle ?? 'Admin' }}</h1>
+            class="sticky top-0 z-30 h-16 sm:h-20 bg-white/90 backdrop-blur-xl
+                       border-b border-slate-200 px-4 sm:px-6 lg:px-8
+                       flex items-center gap-3">
+
+            {{-- Mobile menu --}}
+            <button onclick="openSidebar()" aria-label="Open navigation"
+                class="lg:hidden flex items-center justify-center w-10 h-10
+                           rounded-xl text-slate-600 hover:bg-slate-100 shrink-0">
+
+                <x-icon name="bars-3" class="w-6 h-6" />
+            </button>
+
+            {{-- Page title --}}
+            <div class="min-w-0">
+                <h2 class="text-base sm:text-xl font-bold text-slate-900 truncate">
+                    {{ $headerTitle ?? 'Trainer Panel' }}
+                </h2>
+                <p class="hidden sm:block text-xs text-slate-400 mt-0.5">
+                    Manage your members and training activities
+                </p>
             </div>
 
-            <div class="flex items-center gap-2 sm:gap-3">
-                <!-- Notification Bell (placeholder) -->
-                <button class="relative p-2 rounded-xl hover:bg-gray-100 transition">
-                    <x-icon name="bell" class="w-5 h-5 text-gray-500" />
-                </button>
+            <div class="ml-auto flex items-center gap-2 sm:gap-4">
 
-                <!-- User Info -->
-                <div class="flex items-center gap-2 pl-2 border-l border-gray-200">
-                    <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                {{-- Notifications --}}
+                <a href="{{ route('trainer.notifications.index') }}" aria-label="Notifications"
+                    class="relative flex items-center justify-center w-10 h-10
+                          rounded-xl text-slate-500 hover:bg-slate-100 transition">
+
+                    <x-icon name="bell" class="w-5 h-5" />
+
+                    @if ($unread > 0)
                         <span
-                            class="text-indigo-700 font-semibold text-sm">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                            class="absolute top-1 right-1 min-w-[17px] h-[17px]
+                                     px-1 rounded-full bg-red-500 text-white
+                                     text-[10px] font-bold flex items-center justify-center
+                                     ring-2 ring-white">
+                            {{ $unread > 9 ? '9+' : $unread }}
+                        </span>
+                    @endif
+                </a>
+
+                <div class="hidden sm:block h-8 w-px bg-slate-200"></div>
+
+                {{-- User information --}}
+                <div class="hidden sm:flex items-center gap-2.5">
+
+                    <div
+                        class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700
+                                flex items-center justify-center font-bold text-sm">
+                        {{ strtoupper(substr($userName, 0, 1)) }}
                     </div>
-                    <div class="hidden sm:block">
-                        <p class="text-sm font-medium text-gray-700 max-w-[120px] truncate leading-tight">
-                            {{ $user->name }}</p>
-                        <p class="text-xs text-gray-500 leading-tight">Admin</p>
+
+                    <div class="max-w-36">
+                        <p class="text-sm font-semibold text-slate-800 truncate">
+                            {{ $userName }}
+                        </p>
+                        <p class="text-xs text-slate-400">Trainer Account</p>
                     </div>
+
                 </div>
+
             </div>
         </header>
 
-        <!-- Flash Messages -->
-        @if (session('success'))
-            <div
-                class="mx-4 sm:mx-6 mt-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
-                <x-icon name="check-circle" class="w-5 h-5 flex-shrink-0" />
-                {{ session('success') }}
-            </div>
-        @endif
+        {{-- Content --}}
+        <main class="flex-1 w-full max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8">
 
-        @if (session('error'))
-            <div
-                class="mx-4 sm:mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
-                <x-icon name="exclamation" class="w-5 h-5 flex-shrink-0" />
-                {{ session('error') }}
-            </div>
-        @endif
+            {{-- Success message --}}
+            @if (session('success'))
+                <div
+                    class="mb-6 flex items-start gap-3 p-4 rounded-2xl
+                            border border-emerald-200 bg-emerald-50 text-emerald-800">
 
-        @if (session('warning'))
-            <div
-                class="mx-4 sm:mx-6 mt-4 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
-                <x-icon name="exclamation" class="w-5 h-5 flex-shrink-0" />
-                {{ session('warning') }}
-            </div>
-        @endif
+                    <x-icon name="check-circle" class="w-5 h-5 shrink-0 mt-0.5" />
 
-        <!-- Page Content -->
-        <main class="flex-1 p-4 sm:p-6">
+                    <p class="text-sm font-medium">{{ session('success') }}</p>
+                </div>
+            @endif
+
+            {{-- Error message --}}
+            @if (session('error'))
+                <div
+                    class="mb-6 flex items-start gap-3 p-4 rounded-2xl
+                            border border-red-200 bg-red-50 text-red-800">
+
+                    <x-icon name="exclamation-circle" class="w-5 h-5 shrink-0 mt-0.5" />
+
+                    <p class="text-sm font-medium">{{ session('error') }}</p>
+                </div>
+            @endif
+
+            {{-- Validation errors --}}
+            @if ($errors->any())
+                <div class="mb-6 p-4 rounded-2xl border border-red-200 bg-red-50 text-red-800">
+                    <div class="flex gap-2 items-center font-semibold text-sm mb-2">
+                        <x-icon name="exclamation-triangle" class="w-5 h-5" />
+                        Please correct the following errors.
+                    </div>
+
+                    <ul class="list-disc pl-8 space-y-1 text-sm">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             {{ $slot }}
+
         </main>
+
+        <footer class="px-6 py-4 border-t border-slate-200 bg-white">
+            <p class="text-xs text-center text-slate-400">
+                © {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
+            </p>
+        </footer>
+
     </div>
 
     <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
         function openSidebar() {
-            document.getElementById('sidebar').classList.remove('-translate-x-full');
-            document.getElementById('sidebar-overlay').classList.remove('hidden');
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
         }
 
         function closeSidebar() {
-            document.getElementById('sidebar').classList.add('-translate-x-full');
-            document.getElementById('sidebar-overlay').classList.add('hidden');
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
         }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') closeSidebar();
+        });
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 1024) closeSidebar();
+        });
     </script>
 
     @livewireScripts
     @stack('scripts')
+
 </body>
 
 </html>

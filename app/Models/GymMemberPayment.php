@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\LogsActivity;
 
 class GymMemberPayment extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'gym_id', 'member_id', 'membership_id',
@@ -48,4 +49,5 @@ class GymMemberPayment extends Model
     {
         return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
     }
+
 }

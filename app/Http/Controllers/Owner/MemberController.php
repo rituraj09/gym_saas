@@ -58,7 +58,11 @@ class MemberController extends Controller
 
     public function store(StoreMemberRequest $request): RedirectResponse
     {
-        $gym = $request->user()->gymOwner->gym;
+        $gym = auth()->user()->gymOwner->gym;
+
+        if ($subscription && !$subscription->canAddMember()) {
+            return back()->with('error', 'You have reached the maximum number of members (' . $subscription->saasPlan->max_members_label . ') allowed by your ' . $subscription->saasPlan->name . ' plan. Please upgrade to add more.');
+        }
 
         $this->memberService->createMember(
             $gym,

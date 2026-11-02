@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use App\Models\DietPlanTemplate;
 use App\Policies\DietPlanTemplatePolicy;
+use App\Models\AuditLog;
+use App\Policies\AuditLogPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,5 +31,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ExerciseTemplate::class, ExerciseTemplatePolicy::class);
         Gate::policy(MemberExercisePlan::class, MemberExercisePlanPolicy::class);
         Gate::policy(DietPlanTemplate::class, DietPlanTemplatePolicy::class);
+        Gate::policy(AuditLog::class, AuditLogPolicy::class);
     }
 }

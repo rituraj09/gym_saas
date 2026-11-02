@@ -93,4 +93,19 @@ class User extends Authenticatable
 
         return null;
     }
+
+    public function notifications(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(AppNotification::class)->latest();
+    }
+
+    public function unreadNotifications(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(AppNotification::class)->unread()->latest();
+    }
+
+    public function unreadNotificationCount(): int
+    {
+        return $this->unreadNotifications()->count();
+    }
 }

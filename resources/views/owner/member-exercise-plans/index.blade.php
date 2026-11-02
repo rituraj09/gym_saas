@@ -1,3 +1,6 @@
+@php
+    use Illuminate\Support\Facades\Crypt;
+@endphp
 <x-owner-layout>
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
         <div>
@@ -90,12 +93,12 @@
                     </div>
 
                     <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t">
-                        <a href="{{ route('owner.member-exercise-plans.show', $plan) }}"
+                        <a href="{{ route('owner.member-exercise-plans.show', Crypt::encryptString($plan->id)) }}"
                             class="text-indigo-600 text-sm font-medium hover:underline min-h-[44px] flex items-center">
                             <x-icon name="eye" class="w-4 h-4 mr-1" /> View Schedule
                         </a>
                         <div class="flex gap-2">
-                            <a href="{{ route('owner.member-exercise-plans.edit', $plan) }}"
+                            <a href="{{ route('owner.member-exercise-plans.edit', Crypt::encryptString($plan->id)) }}"
                                 class="text-gray-500 hover:text-indigo-600 min-h-[44px] flex items-center">
                                 <x-icon name="pencil" class="w-4 h-4" />
                             </a>

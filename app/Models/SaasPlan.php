@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\LogsActivity;
 
 class SaasPlan extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'name', 'code', 'description', 'monthly_price', 'yearly_price',
@@ -58,5 +59,36 @@ class SaasPlan extends Model
         if ($this->has_reports_module) $features[] = 'Reports';
         if ($this->has_priority_support) $features[] = 'Priority Support';
         return $features;
+    }
+
+    /**
+     * Check if a specific feature/module is enabled on this plan.
+     * Accepted values: 'exercise', 'diet', 'reports', 'priority_support'
+     */
+    public function hasFeature(string $feature): bool
+    {
+        $map = [
+            'exercise'         => 'has_exercise_module',
+            'diet'             => 'has_diet_module',
+            'reports'          => 'has_reports_module',
+            'priority_support' => 'has_priority_support',
+        ];
+
+        $column = $map[$feature] ?? null;
+
+        if (!$column) {
+            return false;
+        }
+
+        return (bool) $this->{$column};
+    }
+
+    /**
+     * Check if a resource limit is unlimited (0 = unlimited in your schema).
+     */
+    public function isUnlimited(string $resource): bool
+    {
+        $column = 'max_' . $resource;
+        return (int) $this->{$column} === 0;
     }
 }

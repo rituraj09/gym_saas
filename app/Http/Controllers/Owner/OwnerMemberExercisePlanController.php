@@ -12,6 +12,8 @@ use App\Models\MemberWorkoutLog;
 use App\Models\WorkoutLogStatus;
 use App\Services\MemberExercisePlanService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Contracts\Encryption\DecryptException;
 
 class OwnerMemberExercisePlanController extends Controller
 {
@@ -94,36 +96,22 @@ class OwnerMemberExercisePlanController extends Controller
             ->with('success', 'Exercise plan created and assigned to ' . $member->full_name . '.');
     }
 
-    public function show(MemberExercisePlan $plan)
+    public function show(string $encryptedId)
     {
-        $this->authorizeGym($plan);
 
-        $plan->load([
-            'member',
+        try {
+            $planId = Crypt::decryptString($encryptedId);
+        } catch (DecryptException $e) {
+            abort(404);
+        }
+
+        $exercise_plan = MemberExercisePlan::with([
+            'member.user',
             'workoutDays.exerciseTemplate.items.exercise',
-            'createdBy',
-        ]);
-
-        // Get this week's logs
-        $startOfWeek = now()->startOfWeek()->toDateString();
-        $endOfWeek = now()->endOfWeek()->toDateString();
-
-        $weeklyLogs = MemberWorkoutLog::where('member_exercise_plan_id', $plan->id)
-            ->whereBetween('workout_date', [$startOfWeek, $endOfWeek])
-            ->with('status')
-            ->get()
-            ->groupBy(fn($log) => $log->workout_date->toDateString());
-
-        $dayNames = [
-            1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday',
-            4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday',
-        ];
-
-        $today = now()->dayOfWeekIso; // 1=Mon, 7=Sun
-
-        return view('owner.member-exercise-plans.show', compact(
-            'plan', 'weeklyLogs', 'dayNames', 'today', 'startOfWeek', 'endOfWeek'
-        ));
+        ])
+            ->where('gym_id', $this->getGymId())
+            ->findOrFail($planId);
+        return view('owner.member-exercise-plans.show', compact('exercise_plan'));
     }
 
     public function edit(MemberExercisePlan $plan)

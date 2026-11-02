@@ -51,7 +51,26 @@ class SaasSubscriptionService
             return $subscription->load(['saasPlan', 'status', 'gym']);
         });
     }
+    public function updateSubscription(GymSubscription $subscription, array $data): GymSubscription
+    {
+        return DB::transaction(function () use ($subscription, $data) {
 
+            $updateData = [
+                'saas_plan_id' => $data['saas_plan_id'],
+                'start_date' => $data['start_date'],
+                'end_date' => $data['end_date'] ?? null,
+                'notes' => $data['notes'] ?? null,
+            ];
+
+            if (isset($data['saas_subscription_status_id'])) {
+                $updateData['saas_subscription_status_id'] = $data['saas_subscription_status_id'];
+            }
+
+            $subscription->update($updateData);
+
+            return $subscription->load(['saasPlan', 'status', 'gym']);
+        });
+    }
     public function cancelSubscription(GymSubscription $subscription): GymSubscription
     {
         $cancelledStatusId = SaasSubscriptionStatus::where('code', 'cancelled')->value('id');

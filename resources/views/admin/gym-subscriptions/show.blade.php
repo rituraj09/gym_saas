@@ -41,7 +41,7 @@
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 uppercase tracking-wide">Plan</p>
-                    <p class="text-sm font-medium text-gray-900 mt-0.5">{{ $subscription->plan->name }}</p>
+                    <p class="text-sm font-medium text-gray-900 mt-0.5">{{ $subscription->saasPlan->name }}</p>
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 uppercase tracking-wide">Billing Cycle</p>
@@ -50,7 +50,7 @@
                 <div>
                     <p class="text-xs text-gray-500 uppercase tracking-wide">Price</p>
                     <p class="text-sm font-medium text-gray-900 mt-0.5">
-                        ${{ number_format($subscription->billing_cycle === 'yearly' ? $subscription->plan->yearly_price : $subscription->plan->monthly_price, 2) }}
+                        ${{ number_format($subscription->billing_cycle === 'yearly' ? $subscription->saasPlan->yearly_price : $subscription->saasPlan->monthly_price, 2) }}
                         / {{ $subscription->billing_cycle === 'yearly' ? 'year' : 'month' }}
                     </p>
                 </div>
@@ -74,20 +74,21 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                 <div>
                     <span class="text-gray-500">Trainers:</span>
-                    <span class="font-medium text-gray-900">{{ $subscription->plan->max_trainers ?? '∞' }}</span>
+                    <span class="font-medium text-gray-900">{{ $subscription->saasPlan->max_trainers ?? '∞' }}</span>
                 </div>
                 <div>
                     <span class="text-gray-500">Members:</span>
-                    <span class="font-medium text-gray-900">{{ $subscription->plan->max_members ?? '∞' }}</span>
+                    <span class="font-medium text-gray-900">{{ $subscription->saasPlan->max_members ?? '∞' }}</span>
                 </div>
                 <div>
                     <span class="text-gray-500">Diet Plans:</span>
                     <span
-                        class="font-medium text-gray-900">{{ $subscription->plan->has_diet_plans ? '✓' : '✗' }}</span>
+                        class="font-medium text-gray-900">{{ $subscription->saasPlan->has_diet_plans ? '✓' : '✗' }}</span>
                 </div>
                 <div>
                     <span class="text-gray-500">Reports:</span>
-                    <span class="font-medium text-gray-900">{{ $subscription->plan->has_reports ? '✓' : '✗' }}</span>
+                    <span
+                        class="font-medium text-gray-900">{{ $subscription->saasPlan->has_reports ? '✓' : '✗' }}</span>
                 </div>
             </div>
         </div>
@@ -97,6 +98,14 @@
             <a href="{{ route('admin.gym-subscriptions.edit', $subscription) }}"
                 class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition min-h-[44px]">
                 <x-icon name="pencil" class="w-4 h-4" /> Edit
+            </a>
+            <a href="{{ route('admin.saas-payments.create', ['subscription_id' => $subscription->id]) }}"
+                class="inline-flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition min-h-[44px]">
+                <x-icon name="currency" class="w-4 h-4" /> Record Payment
+            </a>
+            <a href="{{ route('admin.gym-module-access.index', $subscription->gym_id) }}"
+                class="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition min-h-[44px]">
+                <x-icon name="cog" class="w-4 h-4" /> Module Access
             </a>
             <a href="{{ route('admin.gym-subscriptions.index') }}"
                 class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition min-h-[44px]">
